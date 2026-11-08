@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>渐变背景</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0B0D0F;
+  }
+  /* 右侧蓝色 → 左侧当前深蓝 */
+  .bg {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(to left, #2F6BFF 0%, #1D3F9E 35%, #12224F 65%, #0B0D0F 100%);
+  }
+  /* 星星层 */
+  #stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: twinkle 3.2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: .25; }
+    50%      { opacity: .95; }
+  }
+  /* 鼠标光晕：不加 transition，逐帧跟手 */
+  #glow {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 520px;
+    height: 520px;
+    margin: -260px 0 0 -260px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle,
+      rgba(120, 180, 255, .38) 0%,
+      rgba(90, 150, 255, .20) 32%,
+      rgba(70, 120, 220, .08) 58%,
+      rgba(0, 0, 0, 0) 72%);
+    filter: blur(2px);
+    will-change: transform;
+    transform: translate(-9999px, -9999px);
+  }
+  /* 点击涟漪 */
+  .ripple {
+    position: fixed;
+    pointer-events: none;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    border: 2px solid rgba(160, 200, 255, .85);
+    box-shadow: 0 0 18px rgba(90, 150, 255, .65), inset 0 0 12px rgba(120, 180, 255, .45);
+    animation: ripple .7s cubic-bezier(.2, .7, .3, 1) forwards;
+  }
+  @keyframes ripple {
+    0%   { opacity: .95; transform: scale(1); }
+    100% { opacity: 0;   transform: scale(16); }
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div id="stars"></div>
+<div id="glow"></div>
+<script>
+  // 星星：圆点，越靠右越密集
+  (function () {
+    var box = document.getElementById('stars');
+    var n = 110;
+    for (var i = 0; i < n; i++) {
+      var t = Math.pow(Math.random(), 0.45); // 偏右分布
+      var x = t * 100;
+      var y = Math.random() * 100;
+      var d = (1 + Math.random() * 2.2).toFixed(1);
+      var s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = x + '%';
+      s.style.top = y + '%';
+      s.style.width = d + 'px';
+      s.style.height = d + 'px';
+      s.style.animationDelay = (-Math.random() * 3.2) + 's';
+      s.style.animationDuration = (2.4 + Math.random() * 2.4) + 's';
+      box.appendChild(s);
+    }
+  })();
+
+  // 光晕跟随鼠标：mousemove 只记坐标，rAF 逐帧写 transform，零延迟
+  var glow = document.getElementById('glow');
+  var mx = -9999, my = -9999, pending = false, visible = false;
+  function paint() {
+    pending = false;
+    if (!visible) { glow.style.transform = 'translate(-9999px,-9999px)'; return; }
+    glow.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+  }
+  function queue() { if (!pending) { pending = true; requestAnimationFrame(paint); } }
+  document.addEventListener('mousemove', function (e) {
+    mx = e.clientX; my = e.clientY; visible = true; queue();
+  });
+  document.addEventListener('mouseleave', function () { visible = false; queue(); });
+
+  // 点击涟漪
+  document.addEventListener('mousedown', function (e) {
+    var r = document.createElement('div');
+    r.className = 'ripple';
+    r.style.left = e.clientX + 'px';
+    r.style.top = e.clientY + 'px';
+    document.body.appendChild(r);
+    setTimeout(function () { r.remove(); }, 750);
+  });
+</script>
+</body>
+</html>
